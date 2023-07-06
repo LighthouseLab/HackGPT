@@ -1,0 +1,22 @@
+version: '3.8'
+name: streamlit-app
+services:
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # ports:
+    #   - '8501:8501'
+    volumes:
+      - ./app:/app
+  
+  caddy:
+    image: caddy:2.6.4-alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - streamlit
+    restart: unless-stopped
