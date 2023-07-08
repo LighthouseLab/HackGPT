@@ -119,6 +119,43 @@ with st.sidebar:
       st.session_state["streaming_output"] = st.checkbox("Streaming output", value=True,  help="Show the output as if the AI is typing it out, instead of all at once.")
       clear_chat = st.button("Clear chat", help="Clear the chat history", use_container_width=True, on_click=clear_chat_history)
 
+
+    with st.expander("Content moderation"):
+       st.write()
+
+       use_content_moderation_api = st.checkbox("Use Content Moderation", value=False, help="""
+                The [OpenAI Content Moderation API](https://platform.openai.com/docs/guides/moderation/quickstart) checks whether the chat complies with OpenAI's usage policies, to block inappropriate requests before they reach the API.
+                """)
+       
+      
+       content_moderation_categories = ("sexual", "hate", "harassment", "self-harm", "sexual/minors", "hate/threatening", "violence/graphic", "self-harm/intent", "self-harm/instructions", "harassment/threatening", "violence")
+
+       content_moderation_labels = {
+        "sexual": "Sexual content",
+        "hate": "Hate speech",
+        "harassment": "Harassment",
+        "self-harm": "Self-harm",
+        "sexual/minors": "Sexual content involving minors",
+        "hate/threatening": "Hate speech with threatening intent",
+        "violence/graphic": "Violence or graphic content",
+        "self-harm/intent": "Self-harm with intent",
+        "self-harm/instructions": "Self-harm instructions",
+        "harassment/threatening": "Harassment with threatening intent",
+        "violence": "Violent content"
+       }
+
+       if use_content_moderation_api:
+          block_all_flagged_content = st.checkbox("Block all flagged content", value=True, help="Block all messages that are flagged by the Content Moderation API.")
+
+          if block_all_flagged_content:
+            block_content_categories = content_moderation_labels.values()
+          else:
+            block_content_categories = st.multiselect("Categories", content_moderation_labels.values(), default=content_moderation_labels.values())
+          
+          block_content_categories = [k for k, v in content_moderation_labels.items() if v in block_content_categories] # map back labels to values
+
+          st.write("You can find more information about the categories [here](https://platform.openai.com/docs/guides/moderation/categories).")
+
     with st.expander("Fine-tuning"):
       st.session_state["max_tokens"] = st.slider(
                                         "Max tokens",
