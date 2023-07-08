@@ -14,13 +14,5 @@ docker-compose down
 ### Docker (manually)
 
 ```bash
-docker build -t hackgpt .
-docker run --rm -p 8501:8501 -v $(pwd)/app:/app hackgpt
-docker image rm hackgpt
-```
-
-Same goes for the Caddy image:
-
-```bash
-docker run --rm --name hackgpt-caddy -p 80:80 -p 443:443 -v $(pwd)/Caddyfile:/etc/caddy/Caddyfile caddy:2.6.4-alpine
+docker run --rm -p 8501:8501 -v $(pwd)/app:/app -w /app python:3.9-slim bash -c "pip install -r requirements.txt && streamlit run app.py
 ```
