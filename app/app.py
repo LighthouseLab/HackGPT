@@ -72,7 +72,7 @@ with st.sidebar:
           "sarcastic": "Sarcastic assistant",
           "mad": "Mad assistant",
           "pedro": "Pedro",
-          "jane": "Jane",
+          "tarzan": "Tarzan",
           "phil-codings": "Phil Codings",
           "the-codettes": "The Codettes",
           "writing-assistant": "Writing assistant",
