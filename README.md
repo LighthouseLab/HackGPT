@@ -2,6 +2,8 @@
 
 Welcome to HackGPT, a powerful and customizable AI chatbot interface designed specifically for developers. With a ChatGPT-like experience, HackGPT brings a host of key features to enhance your hacking capabilities and empower your development process.
 
+[![HackGPT Demo](images/demo.gif)](./images/demo.gif)
+
 ## Current Features
 
 - **ChatGPT-like Interface**: Immerse yourself in a chat-like environment with streaming output and a typing effect. Enable or disable the typing effect based on your preference for quick responses.
