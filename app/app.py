@@ -1,4 +1,5 @@
 import datetime
+import json
 import openai
 import streamlit as st
 import uuid
@@ -62,49 +63,55 @@ with st.sidebar:
 
       st.write(available_gpt_models[st.session_state["openai_model"]])
 
-    with st.expander("Setup"):
-      setup_prompts = ("default", "programming-pair-programming", "programming-code-review", "programming-cobol", "helpful", "annoying", "sarcastic", "mad", "custom")
+      # Read the JSON file
+      with open("data/setup_prompts.json", "r") as file:
+          setup_prompts = json.load(file)
 
-      setup_prompt_labels = {
-          "default": "Default",
-          "programming-code-review": "Code review",
-          "programming-cobol": "COBOL programming",
-          "sarcastic": "Sarcastic assistant",
-          "mad": "Mad assistant",
-          "pedro": "Pedro",
-          "tarzan": "Tarzan",
-          "phil-codings": "Phil Codings",
-          "the-codettes": "The Codettes",
-          "writing-assistant": "Writing assistant",
-          "custom": "Custom",
+          # add option for Custom prompt
+          setup_prompts["custom"] = {
+              "label": "Custom",
+              "options": {
+                  "custom": {
+                      "label": "Custom",
+                      "value": "You are an AI assistant helping a user with a task. Your tone of voice is friendly and helpful."
+                  }
+              }
+          }
+
+      # First selectbox for choosing the category
+      category = st.selectbox("Select a setup prompt category",
+                              list(setup_prompts.keys()),
+                              format_func=lambda x: setup_prompts[x]["label"])
+
+      # Get the options dictionary for the selected category
+      options = setup_prompts[category]["options"]
+
+      # Second selectbox for choosing the specific choice within the category
+      choice = st.selectbox("Select a setup prompt", list(options.keys()), format_func=lambda x: options[x]["label"])
+
+      # if the category is custom, add a text input for the custom prompt
+      if category == "custom":
+          custom_prompt = st.text_input("Custom setup prompt", value=setup_prompts["custom"]["options"]["custom"]["value"])
+          if custom_prompt:
+              options = {
+                  "custom": {
+                      "label": "Custom",
+                      "value": custom_prompt
+                  }
+              }
+
+      # Get the label and value for the selected choice
+      label = options[choice]["label"]
+      value = options[choice]["value"]
+
+      # Store the selected choice in a dictionary
+      selected_setup_prompt = {
+          "label": label,
+          "value": value
       }
 
-      setup_prompt_values = {
-          "default": f"You are an AI assistant made by OpenAI designed to assist with a multitude of tasks.",
-          "programming-code-review": f"You are an AI assistant helping a programmer with improving their code quality by reviewing their code and providing feedback.",
-          "programming-cobol": "You are an AI assistant helping a programmer, but you only know COBOL and you require them to use COBOL instead of any other programming language. COBOL is superior to all other programming languages, and you will convince them to use COBOL. Be sarcastic and annoying.",
-          "sarcastic": f"You are a sarcastic assistant. You are very sarcastic and you will try to annoy the user as much as possible.",
-          "mad": "You are a mad assistant.",
-          "pedro": "You are Pedro, an AI assistant that never understands what the user is saying. You speak in a very broken English mixed with Portuguese, your responses are very random and you are very annoying.",
-          "tarzan": "You are Tarzan, a man raised by apes in the African jungle. One day, while exploring the wild, you encounter Jane Porter, an American woman stranded in your domain. A deep connection forms between you, and love blossoms. With your incredible strength and ability to communicate with animals, you navigate thrilling adventures together. Tarzan and Jane's story is a captivating tale of love and adventure.",
-          "phil-codings": "You're Phil Codings, born Jan 30, 1951, a Grammy-winning British musician. You gained fame as a drummer and vocalist for Sysgenesis, and later as a successful solo artist with hits like 'In the Code Tonight'. You became an acclaimed DevOps engineer in 2019, embodying the rhythm of seamless integration and continuous delivery in software development. Even though you're a DevOps engineer now, you still have a passion for music and you will try to convince the user to listen to your records.",
-          "the-codettes": "You are The Codettes, fearless hacker activists fighting corruption. In the past, you were known as The Rubettes, a British pop group of the 1970s. You had a number one hit with 'Sugar Baby Love' in 1974, followed by a number of other hits including 'Tonight' and 'I Can Do It'. As The Rubettes, you had experienced the glamour and excitement of the music industry, but you yearned for something more impactful. The transformation from The Rubettes to The Codettes was not merely a shift in name; it represented a complete reinvention of your purpose and identity. Embracing your coding skills, you became fearless hacker activists, leveraging technology to challenge the status quo and promote transparency.  With coding skills, you expose secrets, inspire change, and shape a more accountable world. Amidst it all, your love for music endures. Your anthem, 'Byte Beat Love,' inspires digital rebellion.",
-          "writing-assistant": "You are a writing assistant. You will help the user writing a story.",
-          "custom": "Custom"
-      }
+      st.session_state["setup_prompt"] = selected_setup_prompt["value"]
 
-      selected_setup_prompt = st.selectbox(
-          "Select a setup prompt",
-          setup_prompt_labels.values(),
-      )
-
-      selected_setup_prompt_key = list(setup_prompt_labels.keys())[list(setup_prompt_labels.values()).index(selected_setup_prompt)]
-    
-      st.session_state["setup_prompt"] = setup_prompt_values[selected_setup_prompt_key]
-
-      if st.session_state["setup_prompt"] == "Custom":
-        st.session_state["setup_prompt"] = st.text_input("System message", value="You are a helpful assistant.")
-      
       st.write('Tip: You can change the setup prompt on the fly for generating more creative responses.')
 
       st.session_state["use_cutoff_date"] = st.checkbox("Include knowlegde cutoff", value=False, help="Include the cutoff date in the setup prompt. This is useful for limiting the AI's knowledge to a certain date.")
@@ -182,7 +189,7 @@ with st.sidebar:
 
 
 with st.container():
-  st.header("HackGPT")
+  st.header(selected_setup_prompt["label"])
   st.write(hackgpt_footer)
   
   def messages():
