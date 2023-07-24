@@ -122,10 +122,10 @@ with st.sidebar:
     with st.expander("Fine-tuning"):
       st.session_state["max_tokens"] = st.slider(
                                         "Max tokens",
-                                        min_value=1,
+                                        min_value=512,
                                         max_value=8192,
-                                        value=512,
-                                        step=1,
+                                        value=2048,
+                                        step=16,
                                         help="The maximum number of [tokens](https://platform.openai.com/tokenizer) to generate in the chat completion."
                                       )
       
