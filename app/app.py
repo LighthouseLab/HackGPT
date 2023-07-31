@@ -12,8 +12,17 @@ st.set_page_config(
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
+if 'chat_messages' not in st.session_state:
+  st.session_state['chat_messages'] = []
+
 def clear_chat_history():
     st.session_state["chat_messages"] = []
+
+def get_chat_history():
+    return st.session_state["chat_messages"]
+
+def get_chat_history_json():
+    return json.dumps(get_chat_history())
 
 available_gpt_models = {
     "gpt-3.5-turbo": "Recommended model, optimized for chat at 1/10th the cost of text-davinci-003.",
@@ -124,7 +133,6 @@ with st.sidebar:
 
     with st.expander("Chat options"):
       st.session_state["streaming_output"] = st.checkbox("Streaming output", value=True,  help="Show the output as if the AI is typing it out, instead of all at once.")
-      clear_chat = st.button("Clear chat", help="Clear the chat history", use_container_width=True, on_click=clear_chat_history)
 
     with st.expander("Fine-tuning"):
       st.session_state["max_tokens"] = st.slider(
@@ -191,14 +199,40 @@ with st.sidebar:
 with st.container():
   st.header(selected_setup_prompt["label"])
   st.write(hackgpt_footer)
+
+  with st.expander("Chat tools"):
+    st.write("Tip: You can save the chat history as a JSON file and upload it later to continue the conversation.")
+
+    clear_chat_history = st.button(
+        label="Clear chat history",
+        help="Clear the chat history.",
+        on_click=clear_chat_history()
+    )
+
+    # download_chat_history = st.download_button(
+    #     label="Download chat history",
+    #     data=get_chat_history_json(),
+    #     file_name=f"chat_history_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+    #     mime="application/json",
+    #     help="Download the chat history as a JSON file."
+    # )
+
+    # chat_history_file = st.file_uploader(
+    #     label="Upload chat history",
+    #     type=["json"],
+    #     help="Upload a JSON file containing a chat history to load it into the chat window."
+    # )
+
+    # if chat_history_file is not None:
+    #     chat_history_json = chat_history_file.read()
+    #     chat_history = json.loads(chat_history_json)
+    #     st.session_state["chat_messages"] = chat_history # update the chat history
   
   def messages():
-     if 'chat_messages' not in st.session_state:
-        st.session_state['chat_messages'] = []
      return [
       { "role": "system", "content": st.session_state["setup_prompt"] }
         ] + [
-      {"role": message["role"], "content": message["content"]}
+      { "role": message["role"], "content": message["content"] }
         for message in st.session_state["chat_messages"]
       ] # contains both the system message and the chat messages
 
@@ -213,26 +247,26 @@ with st.container():
 
       if st.session_state.streaming_output:
         with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            full_response = ""
-            for response in openai.ChatCompletion.create(
-                model=st.session_state["openai_model"],
-                messages=[
-                    {"role": m["role"], "content": m["content"]}
-                    for m in messages()
-                ],
-                max_tokens=st.session_state["max_tokens"],
-                temperature=st.session_state["temperature"],
-                top_p=st.session_state["top_p"],
-                presence_penalty=st.session_state["presence_penalty"],
-                frequency_penalty=st.session_state["frequency_penalty"],
-                user=st.session_state["session_identifier"],
-                stream=True,
-            ):
-                full_response += response.choices[0].delta.get("content", "")
-                message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response)
-        st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
+          message_placeholder = st.empty()
+          full_response = ""
+          for response in openai.ChatCompletion.create(
+            model=st.session_state["openai_model"],
+            messages=[
+                {"role": m["role"], "content": m["content"]}
+                for m in messages()
+            ],
+            max_tokens=st.session_state["max_tokens"],
+            temperature=st.session_state["temperature"],
+            top_p=st.session_state["top_p"],
+            presence_penalty=st.session_state["presence_penalty"],
+            frequency_penalty=st.session_state["frequency_penalty"],
+            user=st.session_state["session_identifier"],
+            stream=True,
+          ):
+            full_response += response.choices[0].delta.get("content", "")
+            message_placeholder.markdown(full_response + "▌")
+          message_placeholder.markdown(full_response)
+          st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
       else:
         with st.chat_message("assistant"):
           message_placeholder = st.markdown("Thinking...")
@@ -242,12 +276,12 @@ with st.container():
                   {"role": m["role"], "content": m["content"]}
                   for m in messages()
               ],
-                max_tokens=st.session_state["max_tokens"],
-                temperature=st.session_state["temperature"],
-                top_p=st.session_state["top_p"],
-                presence_penalty=st.session_state["presence_penalty"],
-                frequency_penalty=st.session_state["frequency_penalty"],
-                user=st.session_state["session_identifier"],
+              max_tokens=st.session_state["max_tokens"],
+              temperature=st.session_state["temperature"],
+              top_p=st.session_state["top_p"],
+              presence_penalty=st.session_state["presence_penalty"],
+              frequency_penalty=st.session_state["frequency_penalty"],
+              user=st.session_state["session_identifier"],
           ).choices[0].message.content
           message_placeholder.markdown(response)
-        st.session_state.chat_messages.append({"role": "assistant", "content": response})
+          st.session_state.chat_messages.append({"role": "assistant", "content": response})
